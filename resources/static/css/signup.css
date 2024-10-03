@@ -1,0 +1,35 @@
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+.signup-container{
+    background  : white;
+    padding: 20px;
+    background-color: white;
+    width: 500px;
+    display: grid;
+    justify-content: center;
+    border-radius: 30px;
+    margin: 20px;
+    margin-left: 370px;
+    border: solid;
+    
+    background: #222429;
+}
+
+.signup-btn{
+    border: 1px solid black;
+    width: fit-content;
+    padding: 5px 20px;
+    background-color: #9982f2;
+    border-radius: 30px;
+    color: white;
+    font-weight: 600;
+    margin-left: 180px;
+}
+
+input{
+    background-color: white;
+}

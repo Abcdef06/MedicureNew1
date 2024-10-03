@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescription Form</title>
+    <link rel="stylesheet" href="prescription.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Doctor's Prescription Form</h1>
+        <form id="prescriptionForm">
+            <div class="form-group">
+                <label for="doctorName">Doctor's Name:</label>
+                <input type="text" id="doctorName" name="doctorName" required>
+            </div>
+            <div class="form-group">
+                <label for="patientName">Patient's Name:</label>
+                <input type="text" id="patientName" name="patientName" required>
+            </div>
+            <div class="form-group">
+                <label for="age">Patient's Age:</label>
+                <input type="number" id="age" name="age" min="1" max="120" required>
+            </div>
+            <div class="form-group">
+                <label for="medicines">Medicines Prescribed:</label>
+                <textarea id="medicines" name="medicines" rows="4" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="dosage">Dosage Instructions:</label>
+                <textarea id="dosage" name="dosage" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="nextVisit">Visit Date:</label>
+                <input type="date" id="Visit" name="Visit">
+            </div>
+            <div class="form-group">
+                <button type="submit">Submit Prescription</button>
+            </div>
+        </form>
+        <p id="confirmationMessage"></p>
+
+        <!-- New Section for Fetching Prescriptions -->
+        <div class="fetch-prescription">
+            <h2>Search Prescription</h2>
+            <br>
+            <input type="text" id="searchPatientName" placeholder="Enter Patient's Name" required>
+            <br><br>
+            <button id="fetchPrescriptionBtn">Fetch Prescription</button>
+            <div id="prescriptionResults"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+      import { getFirestore, addDoc, collection, query, where, getDocs, Timestamp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDaHxr9UvN_4AqhkpcPr2ZB1PkN3Tldm84",
+        authDomain: "medicure-c619d.firebaseapp.com",
+        projectId: "medicure-c619d",
+        storageBucket: "medicure-c619d.appspot.com",
+        messagingSenderId: "933017046943",
+        appId: "1:933017046943:web:3ea981a83c36c6b6c277aa",
+        measurementId: "G-714TTHKFQ0"
+      };
+
+      // Initialize Firebase and Firestore
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // Handle form submission for prescription
+      document.getElementById('prescriptionForm').addEventListener('submit', async function(e) {
+        e.preventDefault(); // Prevent the default form submission behavior
+
+        // Get form values
+        const doctorName = document.getElementById('doctorName').value;
+        const patientName = document.getElementById('patientName').value;
+        const age = parseInt(document.getElementById('age').value, 10); // Ensure age is a number
+        const medicines = document.getElementById('medicines').value;
+        const dosage = document.getElementById('dosage').value;
+        const VisitString = document.getElementById('Visit').value;
+
+        // Convert to Firestore Timestamp
+        const Visit = VisitString ? Timestamp.fromDate(new Date(VisitString + "T00:00:00Z")) : null;
+
+        try {
+          // Save form data to Firestore
+          await addDoc(collection(db, "prescriptions"), {
+            doctorName: doctorName,
+            patientName: patientName,
+            age: age,
+            medicines: medicines,
+            dosage: dosage,
+            Visit: Visit // Store as Timestamp
+          });
+
+          // Show confirmation message
+          document.getElementById('confirmationMessage').textContent = "Prescription submitted successfully!";
+          document.getElementById('confirmationMessage').style.color = 'green';
+
+          // Redirect to index.html after a short delay
+          setTimeout(() => {
+            window.location.href = 'index.html'; // Change this if needed
+          }, 2000); // Redirect after 2 seconds
+
+          // Clear the form after submission (optional since you're redirecting)
+          document.getElementById('prescriptionForm').reset();
+        } catch (error) {
+          document.getElementById('confirmationMessage').textContent = "Error: " + error.message;
+          document.getElementById('confirmationMessage').style.color = 'red';
+        }
+      });
+
+      // Fetch prescriptions for a specific patient
+      document.getElementById('fetchPrescriptionBtn').addEventListener('click', async function() {
+        const patientName = document.getElementById('searchPatientName').value;
+
+        try {
+          const q = query(collection(db, "prescriptions"), where("patientName", "==", patientName));
+          const querySnapshot = await getDocs(q);
+
+          // Clear previous results
+          const resultsContainer = document.getElementById('prescriptionResults');
+          resultsContainer.innerHTML = "";
+
+          if (querySnapshot.empty) {
+            resultsContainer.innerHTML = "<p>No prescriptions found for this patient.</p>";
+            return;
+          }
+
+          querySnapshot.forEach((doc) => {
+            const prescription = doc.data();
+            const prescriptionDetails = `
+              <div>
+                <h3>Prescription for ${prescription.patientName}</h3>
+                <p><strong>Doctor's Name:</strong> ${prescription.doctorName}</p>
+                <p><strong>Patient's Age:</strong> ${prescription.age}</p>
+                <p><strong>Medicines Prescribed:</strong> ${prescription.medicines}</p>
+                <p><strong>Dosage Instructions:</strong> ${prescription.dosage}</p>
+                <p><strong>Visit:</strong> ${prescription.Visit ? prescription.Visit.toDate().toLocaleDateString() : 'N/A'}</p>
+              </div>
+              <hr>
+            `;
+            resultsContainer.innerHTML += prescriptionDetails;
+          });
+        } catch (error) {
+          console.error("Error fetching prescriptions: ", error);
+        }
+      });
+    </script>
+</body>
+</html>
+
+
